@@ -17,7 +17,7 @@ If you use this code for research please cite:
     }
 
 
-See the [Op documentation](../doc/lmbspecialops_doc.md) for a description of all functions.
+See the [Op documentation](doc/lmbspecialops_doc.md) for a description of all functions.
 
 
 
