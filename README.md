@@ -80,24 +80,14 @@ print(B.eval()) # prints [1, 2, 0]
 
     
 
-### Virtualenv build with pew
+### Virtualenv build 
 
-To build with a virtualenv managed by ```pew``` you need to activate the virtualenv before running cmake.
+To build inside a virtualenv make sure to activate the environment before
+running cmake.
 
-```bash
-# in lmbspecialops/build
-pew in myvenv
-[myvenv]  cmake ..
-```
-This way cmake will find the correct python and tensorflow paths.
-To add the lmbspecialops to your python path you can simply do
-```bash
-# in lmbspecialops with activated virtualenv
-[myvenv] pew add python
-```
-
-Running cmake in a virtualenv activated with ```activate``` does not seem to work. 
-See this https://gist.github.com/datagrok/2199506 for possible solutions.
+If you encounter problems with cmake not finding the correct paths to your
+python interpreter or tensorflow see https://gist.github.com/datagrok/2199506
+for possible solutions.
 
 
 
