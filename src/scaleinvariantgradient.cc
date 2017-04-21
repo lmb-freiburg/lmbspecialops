@@ -1,6 +1,6 @@
 //
 //  lmbspecialops - a collection of tensorflow ops
-//  Copyright (C) 2017  Benjamin Ummenhofer
+//  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
 //  
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
