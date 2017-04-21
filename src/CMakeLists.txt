@@ -11,8 +11,7 @@ configure_file( config.h.in config.h )
 if( BUILD_WITH_CUDA )
 	find_package( CUDA REQUIRED )
 	include( "${CMAKE_SOURCE_DIR}/cmake/cuda_gencode_options.cmake" )
-	#list( APPEND CUDA_NVCC_FLAGS "-Xcompiler ${OpenMP_CXX_FLAGS}" )
-	list( APPEND CUDA_NVCC_FLAGS "-std=c++11 -D_GLIBCXX_USE_CXX11_ABI=0" )
+	list( APPEND CUDA_NVCC_FLAGS "-std=c++11")
 	list( APPEND CUDA_NVCC_FLAGS "${CUDA_GENCODE_STRING}" )
 	list( APPEND CUDA_NVCC_FLAGS_DEBUG -g -G -O0 --ptxas-options=-v )
 
@@ -35,9 +34,12 @@ endif()
 # do not add 'lib' prefix
 set_target_properties( lmbspecialops PROPERTIES PREFIX "" )
 set_target_properties( lmbspecialops PROPERTIES DEBUG_POSTFIX "_debug" )
-set_target_properties( lmbspecialops PROPERTIES COMPILE_FLAGS "-std=c++11 ${OpenMP_CXX_FLAGS}" )
+set_target_properties( lmbspecialops PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
 set_target_properties( lmbspecialops PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}" )
 # use old ABI with gcc 5.x
 set_target_properties( lmbspecialops PROPERTIES COMPILE_DEFINITIONS "_GLIBCXX_USE_CXX11_ABI=0" )
-
-
+# enable c++11
+set_target_properties( lmbspecialops PROPERTIES 
+                CXX_STANDARD 11 
+                CXX_STANDARD_REQUIRED ON 
+                CXX_EXTENSIONS OFF)
