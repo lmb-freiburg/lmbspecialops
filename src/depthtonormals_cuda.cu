@@ -56,8 +56,8 @@ namespace depthtonormals_kernel_internal
 
     const T inv_fx = 1/(intrinsics[4*z+0]*x_size);
     const T inv_fy = 1/(intrinsics[4*z+1]*y_size);
-    const T cx = 1/(intrinsics[4*z+2]*x_size);
-    const T cy = 1/(intrinsics[4*z+3]*y_size);
+    const T cx = intrinsics[4*z+2]*x_size;
+    const T cy = intrinsics[4*z+3]*y_size;
 
     typedef Eigen::Matrix<T,3,1> Vec3;
     const int xy_size = x_size*y_size;
