@@ -233,7 +233,7 @@ public:
           y3 = p2i.y()+1;
           for( int z = 0; z < z_size; ++z )
           {
-            if( x0 >= 0 && x3 < x_size && y0 >= 0 && y3 < y_size )
+            if( x0 >= 0 && x3 > 0 && x3 < x_size && y0 >= 0 && y3 > 0 && y3 < y_size )
             {
               values(0) = IN(w,z,y0,x0);
               values(1) = IN(w,z,y1,x1);
