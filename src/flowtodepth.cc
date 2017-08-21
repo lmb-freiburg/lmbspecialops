@@ -99,6 +99,43 @@ REGISTER_OP("FlowToDepth")
         }
         c->Concatenate(c->MakeShape({first_dim, c->MakeDim(1)}), shape2d, &output_shape);
         c->set_output(0, output_shape);
+
+
+        // check if the batch dimension matches with the other parameters
+        if( c->RankKnown(intrinsics_shape) )
+        {
+          DimensionHandle intrinsics_first_dim = c->MakeDim(1);
+          int rank = c->Rank(intrinsics_shape);
+          for( int i = 0; i < rank-1; ++i )
+          {
+            c->Multiply(intrinsics_first_dim, c->Dim(intrinsics_shape,i), &intrinsics_first_dim);
+          }
+          TF_RETURN_IF_ERROR(c->Merge(first_dim, intrinsics_first_dim, &first_dim));
+        }
+        if( c->RankKnown(translation_shape) )
+        {
+          DimensionHandle translation_first_dim = c->MakeDim(1);
+          int rank = c->Rank(translation_shape);
+          for( int i = 0; i < rank-1; ++i )
+          {
+            c->Multiply(translation_first_dim, c->Dim(translation_shape,i), &translation_first_dim);
+          }
+          TF_RETURN_IF_ERROR(c->Merge(first_dim, translation_first_dim, &first_dim));
+        }
+        if( c->RankKnown(rotation_shape) )
+        {
+          DimensionHandle rotation_first_dim = c->MakeDim(1);
+          int rank = c->Rank(rotation_shape);
+          int min_rank = 1;
+          if( rotation_format == "matrix" )
+            min_rank = 2;
+          for( int i = 0; i < rank-min_rank; ++i )
+          {
+            c->Multiply(rotation_first_dim, c->Dim(rotation_shape,i), &rotation_first_dim);
+          }
+          TF_RETURN_IF_ERROR(c->Merge(first_dim, rotation_first_dim, &first_dim));
+        }
+
       }
       else
       {
@@ -107,29 +144,35 @@ REGISTER_OP("FlowToDepth")
       return Status::OK();
     })
   .Doc(R"doc(
-Computes the depth from optical flow and the camera motion.
+DEPRECATED Computes the depth from optical flow and the camera motion. DEPRECATED
 
-Takes the optical flow and the relative camera motion from the second camera to
-compute a depth map.
-The layer assumes that the internal camera parameters are the same for both
-images.
+The behaviour of this function is incorrect. This function is kept for 
+compatibility with old networks, which rely on this specific behaviour.
+For new code use flow_to_depth2() instead.
 
-
-flow: 
-  optical flow normalized or in pixel units.
+flow:
+  optical flow normalized or in pixel units. The tensor format must be NCHW.
 
 intrinsics:
   camera intrinsics in the format [fx, fy, cx, cy].
   fx,fy are the normalized focal lengths.
   cx,cy is the normalized position of the principal point.
+  The format of the tensor is NC with C=4 and N matching the batch size of the 
+  flow tensor.
+  
 
 rotation:
   The relative rotation R of the second camera.
   RX+t transforms a point X to the camera coordinate system of the second camera
-
+  The format of the tensor is either NC with C=3 or C=4 or NIJ with I=3 and J=3.
+  N matches the batch size of the flow tensor.
+  
+  
 translation:
   The relative translation vector t of the second camera.
   RX+t transforms a point X to the camera coordinate system of the second camera
+  The format of the tensor is NC with C=3 and N matching the batch size of the 
+  flow tensor.
 
 rotation_format:
   The format for the rotation. 
@@ -391,10 +434,10 @@ public:
       {
         Vec2 x1(x+T(0.5), y+T(0.5));
         Vec2 flowvec;
+        x1.x() *= inv_x_size;
+        x1.y() *= inv_y_size;
         if( NORMALIZED_FLOW )
         {
-          x1.x() *= inv_x_size;
-          x1.y() *= inv_y_size;
           flowvec.x() = FLOW(0,x,y);
           flowvec.y() = FLOW(1,x,y);
         }
@@ -414,7 +457,6 @@ public:
         T point_line_distance = l.dot(x2.homogeneous());
         Vec2 x2_on_line = x2 - l.topRows(2)*point_line_distance;
         
-        //T point_line_distance2 = l.dot(x2_on_line.homogeneous());
 
         xvec[0] = x1;
         xvec[1] = x2;
