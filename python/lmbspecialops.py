@@ -33,6 +33,7 @@ print('Using {0}'.format(_lib_path), flush=True)
 # create alias for each op
 depth_to_flow = lmbspecialopslib.depth_to_flow
 depth_to_normals = lmbspecialopslib.depth_to_normals
+flow_to_depth2 = lmbspecialopslib.flow_to_depth2
 leaky_relu = lmbspecialopslib.leaky_relu
 median3x3_downsample = lmbspecialopslib.median3x3_downsample
 replace_nonfinite = lmbspecialopslib.replace_nonfinite
