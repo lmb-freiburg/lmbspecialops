@@ -47,7 +47,7 @@ inline Eigen::Matrix<T,3,3> convert_to_rotation_matrix(const T* data, RotationFo
   switch(format)
   {
   case MATRIX:
-    R = Eigen::Map<const Mat3>(data);
+    R = Eigen::Map<const Mat3>(data).transpose(); // Eigen uses column major
     break;
   case QUATERNION:
     {
@@ -60,6 +60,7 @@ inline Eigen::Matrix<T,3,3> convert_to_rotation_matrix(const T* data, RotationFo
       q.normalize();
       R = q.toRotationMatrix();
     }
+    break;
   case ANGLEAXIS3:
     {
       Vec3 axis(
@@ -75,6 +76,7 @@ inline Eigen::Matrix<T,3,3> convert_to_rotation_matrix(const T* data, RotationFo
       else
         R.setIdentity();
     }
+    break;
   } //switch
   return R;
 }

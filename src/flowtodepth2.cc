@@ -25,7 +25,7 @@
 
 using namespace tensorflow;
 
-REGISTER_OP("FlowToDepth")
+REGISTER_OP("FlowToDepth2")
   .Attr("T: {float, double}")
   .Attr("rotation_format: {'matrix', 'quaternion', 'angleaxis3'} = 'angleaxis3'")
   .Attr("inverse_depth: bool = false")
@@ -144,11 +144,13 @@ REGISTER_OP("FlowToDepth")
       return Status::OK();
     })
   .Doc(R"doc(
-DEPRECATED Computes the depth from optical flow and the camera motion. DEPRECATED
+Computes the depth from optical flow and the camera motion.
 
-The behaviour of this function is incorrect. This function is kept for 
-compatibility with old networks, which rely on this specific behaviour.
-For new code use flow_to_depth2() instead.
+Takes the optical flow and the relative camera motion from the second camera to
+compute a depth map.
+The layer assumes that the internal camera parameters are the same for both
+images.
+
 
 flow:
   optical flow normalized or in pixel units. The tensor format must be NCHW.
@@ -285,10 +287,10 @@ Eigen::Matrix<T,3,1> triangulateLinear(
 
 
 template <class T>
-class FlowToDepthOp : public OpKernel 
+class FlowToDepth2Op : public OpKernel 
 {
 public:
-  explicit FlowToDepthOp(OpKernelConstruction* construction)
+  explicit FlowToDepth2Op(OpKernelConstruction* construction)
     :OpKernel(construction)
   { 
     std::string R_format;
@@ -451,7 +453,7 @@ public:
 
         // compute the epipolar line in the second image
         Vec3 l = F*x1.homogeneous();
-        l.topRows(2) /= l.topRows(2).norm(); // normalize
+        l /= l.topRows(2).norm(); // normalize
 
         // compute the closest point on the epipolar line to x2
         T point_line_distance = l.dot(x2.homogeneous());
@@ -491,10 +493,10 @@ private:
 
 #define REG_KB(type)                                                          \
 REGISTER_KERNEL_BUILDER(                                                      \
-    Name("FlowToDepth")                                                       \
+    Name("FlowToDepth2")                                                      \
     .Device(DEVICE_CPU)                                                       \
     .TypeConstraint<type>("T"),                                               \
-    FlowToDepthOp<type>);                                                      
+    FlowToDepth2Op<type>);                                                     
 REG_KB(float)
 REG_KB(double)
 #undef REG_KB
