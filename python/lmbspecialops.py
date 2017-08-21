@@ -18,6 +18,7 @@
 import tensorflow as tf
 from tensorflow.python.framework import ops
 import os
+import warnings
 
 if 'LMBSPECIALOPS_LIB' in os.environ:
     _lib_path = os.environ['LMBSPECIALOPS_LIB']
@@ -28,16 +29,34 @@ if not os.path.isfile(_lib_path):
 lmbspecialopslib = tf.load_op_library(_lib_path)
 print('Using {0}'.format(_lib_path), flush=True)
 
+
 # create alias for each op
 depth_to_flow = lmbspecialopslib.depth_to_flow
 depth_to_normals = lmbspecialopslib.depth_to_normals
-flow_to_depth = lmbspecialopslib.flow_to_depth
 leaky_relu = lmbspecialopslib.leaky_relu
 median3x3_downsample = lmbspecialopslib.median3x3_downsample
 replace_nonfinite = lmbspecialopslib.replace_nonfinite
 scale_invariant_gradient = lmbspecialopslib.scale_invariant_gradient
 warp2d = lmbspecialopslib.warp2d
 
+
+# wrap deprecated functions
+def flow_to_depth(flow, intrinsics, rotation, translation, rotation_format=None, inverse_depth=None, normalized_flow=None, name=None, nowarning=False):
+    if not nowarning:
+        warnings.warn("flow_to_depth has incorrect behaviour but is kept for compatibility. Please use flow_to_depth2", DeprecationWarning, stacklevel=2)
+    return lmbspecialopslib.flow_to_depth(
+            flow=flow, 
+            intrinsics=intrinsics, 
+            rotation=rotation, 
+            translation=translation, 
+            rotation_format=rotation_format, 
+            inverse_depth=inverse_depth, 
+            normalized_flow=normalized_flow, 
+            name=name)
+flow_to_depth.__doc__ = lmbspecialopslib.flow_to_depth.__doc__
+
+
+# register gradient ops
 @ops.RegisterGradient("ScaleInvariantGradient")
 def _scale_invariant_gradient_grad(op, grad):
     return lmbspecialopslib.scale_invariant_gradient_grad(
@@ -61,4 +80,6 @@ def _leaky_relu_grad(op, grad):
             gradients=grad, 
             input=op.inputs[0],
             leak=op.get_attr('leak'))
+
+
 
