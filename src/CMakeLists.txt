@@ -20,8 +20,7 @@ set( webp_LIBRARY "${BINARY_DIR}/src/.libs/libwebp.a" )
 ExternalProject_Add(
         lz4
         PREFIX "${CMAKE_BINARY_DIR}/lz4"
-        GIT_REPOSITORY "https://github.com/Cyan4973/lz4.git"
-        GIT_TAG "r131"
+        URL "https://github.com/lz4/lz4/archive/r131.tar.gz"
         # do not update
         UPDATE_COMMAND ""
         # fix missing CMakeLists.txt in source root dir
@@ -45,11 +44,11 @@ message( STATUS "${TENSORFLOW_INCLUDE_DIR}" )
 
 configure_file( config.h.in config.h )
 if( BUILD_WITH_CUDA )
-	find_package( CUDA REQUIRED )
-	include( "${CMAKE_SOURCE_DIR}/cmake/cuda_gencode_options.cmake" )
-	list( APPEND CUDA_NVCC_FLAGS "-std=c++11")
-	list( APPEND CUDA_NVCC_FLAGS "${CUDA_GENCODE_STRING}" )
-	list( APPEND CUDA_NVCC_FLAGS_DEBUG -g -G -O0 --ptxas-options=-v )
+        find_package( CUDA REQUIRED )
+        include( "${CMAKE_SOURCE_DIR}/cmake/cuda_gencode_options.cmake" )
+        list( APPEND CUDA_NVCC_FLAGS "-std=c++11")
+        list( APPEND CUDA_NVCC_FLAGS "${CUDA_GENCODE_STRING}" )
+        list( APPEND CUDA_NVCC_FLAGS_DEBUG -g -G -O0 --ptxas-options=-v )
 
 endif()
 
@@ -59,13 +58,13 @@ file( GLOB lmbspecialops_CUSOURCES *.cu )
 
 include_directories( 
     ${TENSORFLOW_INCLUDE_DIR}
-	${PROJECT_BINARY_DIR}/lib
+        ${PROJECT_BINARY_DIR}/lib
 )
 
 if( BUILD_WITH_CUDA )
-	cuda_add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} ${lmbspecialops_CUSOURCES} )
+        cuda_add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} ${lmbspecialops_CUSOURCES} )
 else()
-	add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} )
+        add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} )
 endif()
 # do not add 'lib' prefix
 set_target_properties( lmbspecialops PROPERTIES PREFIX "" )
