@@ -28,6 +28,7 @@ Building and using requires the following libraries and programs
     tensorflow 1.0.0
     cmake 3.5.1
     python 3.5
+    g++ 5
     cuda 8.0.44 (required for building with gpu support)
 
 The versions match the configuration we have tested on an ubuntu 16.04 system.
