@@ -37,10 +37,15 @@ find_package( PythonInterp REQUIRED )
 find_package( OpenMP REQUIRED )
 
 
-# retrieve tensorflow include dir
+# retrieve tensorflow include dir and lib dir
 execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_include(), end='')" 
         OUTPUT_VARIABLE TENSORFLOW_INCLUDE_DIR )
+execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_lib(), end='')" 
+        OUTPUT_VARIABLE TENSORFLOW_LIB_DIR )
+find_library( TENSORFLOW_FRAMEWORK_LIB tensorflow_framework PATHS "${TENSORFLOW_LIB_DIR}" NO_DEFAULT_PATH )
 message( STATUS "${TENSORFLOW_INCLUDE_DIR}" )
+message( STATUS "${TENSORFLOW_LIB_DIR}" )
+message( STATUS "${TENSORFLOW_FRAMEWORK_LIB}" )
 
 configure_file( config.h.in config.h )
 if( BUILD_WITH_CUDA )
@@ -58,6 +63,7 @@ file( GLOB lmbspecialops_CUSOURCES *.cu )
 
 include_directories( 
     ${TENSORFLOW_INCLUDE_DIR}
+    ${TENSORFLOW_INCLUDE_DIR}/external/nsync/public/  # fix nsync headers not found bug
         ${PROJECT_BINARY_DIR}/lib
 )
 
@@ -90,3 +96,6 @@ target_link_libraries( lmbspecialops
         ${lz4_STATIC_LIB}
         ${webp_LIBRARY}
 )
+if( TENSORFLOW_FRAMEWORK_LIB )
+        target_link_libraries( lmbspecialops ${TENSORFLOW_FRAMEWORK_LIB} )
+endif()
