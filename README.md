@@ -23,14 +23,15 @@ See the [Op documentation](doc/lmbspecialops_doc.md) for a description of all fu
 
 ## Requirements
 
-Building and using requires the following libraries and programs
+Building and using lmbspecialops depends on the following libraries and programs
 
-    tensorflow 1.0.0
-    cmake 3.5.1
+    tensorflow 1.4.0
+    cmake 3.7.1
     python 3.5
-    cuda 8.0.44 (required for building with gpu support)
+    cuda 8.0.61 (required for building with gpu support)
 
 The versions match the configuration we have tested on an ubuntu 16.04 system.
+lmbspecialops can work with other versions of the aforementioned dependencies, e.g. tensorflow 1.3, but this is not well tested.
 
 
 
