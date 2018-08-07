@@ -7,3 +7,5 @@ release
 debug
 CMakeCache.txt
 CMakeFiles
+__pycache__
+test/output*
