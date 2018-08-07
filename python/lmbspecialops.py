@@ -1,17 +1,17 @@
 #
 #  lmbspecialops - a collection of tensorflow ops
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -40,6 +40,12 @@ median3x3_downsample = lmbspecialopslib.median3x3_downsample
 replace_nonfinite = lmbspecialopslib.replace_nonfinite
 scale_invariant_gradient = lmbspecialopslib.scale_invariant_gradient
 warp2d = lmbspecialopslib.warp2d
+
+flow_warp = lmbspecialopslib.flow_warp
+correlation = lmbspecialopslib.correlation
+correlation_1d = lmbspecialopslib.correlation1d
+flow_out_of_frame = lmbspecialopslib.flow_out_of_frame
+
 
 # Author: Lukas Voegtle <voegtlel@tf.uni-freiburg.de>
 def resample(input, size, antialias=False):
@@ -280,13 +286,13 @@ def flow_to_depth(flow, intrinsics, rotation, translation, rotation_format=None,
     if not nowarning:
         warnings.warn("flow_to_depth has incorrect behaviour but is kept for compatibility. Please use flow_to_depth2", DeprecationWarning, stacklevel=2)
     return lmbspecialopslib.flow_to_depth(
-            flow=flow, 
-            intrinsics=intrinsics, 
-            rotation=rotation, 
-            translation=translation, 
-            rotation_format=rotation_format, 
-            inverse_depth=inverse_depth, 
-            normalized_flow=normalized_flow, 
+            flow=flow,
+            intrinsics=intrinsics,
+            rotation=rotation,
+            translation=translation,
+            rotation_format=rotation_format,
+            inverse_depth=inverse_depth,
+            normalized_flow=normalized_flow,
             name=name)
 flow_to_depth.__doc__ = lmbspecialopslib.flow_to_depth.__doc__
 
@@ -316,4 +322,35 @@ def _leaky_relu_grad(op, grad):
         input=op.inputs[0],
         leak=op.get_attr('leak'))
 
+@ops.RegisterGradient("FlowWarp")
+def _flow_warp_grad(op, grad):
+    return lmbspecialopslib.flow_warp_grad(
+            gradient=grad,
+            image=op.inputs[0],
+            flow=op.inputs[1])
 
+@ops.RegisterGradient("Correlation")
+def _correlation_grad(op, grad):
+    return lmbspecialopslib.correlation_grad(
+            gradient=grad,
+            input1=op.inputs[0],
+            input2=op.inputs[1],
+            kernel_size=op.get_attr('kernel_size'),
+            max_displacement=op.get_attr('max_displacement'),
+            stride1=op.get_attr('stride1'),
+            stride2=op.get_attr('stride2'),
+            pad_size=op.get_attr('pad_size') )
+
+@ops.RegisterGradient("Correlation1D")
+def _correlation_1d_grad(op, grad):
+    return lmbspecialopslib.correlation1d_grad(
+            gradient=grad,
+            input1=op.inputs[0],
+            input2=op.inputs[1],
+            kernel_size=op.get_attr('kernel_size'),
+            max_displacement=op.get_attr('max_displacement'),
+            stride1=op.get_attr('stride1'),
+            stride2=op.get_attr('stride2'),
+            pad_size=op.get_attr('pad_size'),
+            single_dir=op.get_attr('single_dir')
+            )
