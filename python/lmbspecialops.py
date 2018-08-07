@@ -45,18 +45,19 @@ flow_warp = lmbspecialopslib.flow_warp
 correlation = lmbspecialopslib.correlation
 correlation_1d = lmbspecialopslib.correlation1d
 flow_out_of_frame = lmbspecialopslib.flow_out_of_frame
+resample = lmbspecialopslib.resample
 
-
+# Remove this?
 # Author: Lukas Voegtle <voegtlel@tf.uni-freiburg.de>
-def resample(input, size, antialias=False):
-    """
-    Resamples the given input tensor to a given size.
-    :param input: dtype input tensor [batch, height, width, channels]
-    :param size: new size (height, width)
-    :param antialias: perform antialiasing iff downsampling
-    :return: resized tensor
-    """
-    return lmbspecialopslib.resample(input, size, antialias=antialias)
+#def resample(input, size, antialias=False):
+#    """
+#    Resamples the given input tensor to a given size.
+#    :param input: dtype input tensor [batch, height, width, channels]
+#    :param size: new size (height, width)
+#    :param antialias: perform antialiasing iff downsampling
+#    :return: resized tensor
+#    """
+#    return lmbspecialopslib.resample(input, size, antialias=antialias)
 
 
 # Author: Lukas Voegtle <voegtlel@tf.uni-freiburg.de>
