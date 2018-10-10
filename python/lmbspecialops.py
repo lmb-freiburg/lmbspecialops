@@ -20,10 +20,7 @@ from tensorflow.python.framework import ops
 import os
 import warnings
 
-if 'LMBSPECIALOPS_LIB' in os.environ:
-    _lib_path = os.environ['LMBSPECIALOPS_LIB']
-else:  # try to find the lib in the build directory relative to this file
-    _lib_path = os.path.abspath(os.path.join(os.path.split(__file__)[0], '..', 'build', 'lib', 'lmbspecialops.so'))
+_lib_path = os.path.abspath(os.path.join(os.path.split(__file__)[0], '..', 'build', 'lib', 'lmbspecialops.so'))
 if not os.path.isfile(_lib_path):
     raise ValueError(
         'Cannot find lmbspecialops.so . Set the environment variable LMBSPECIALOPS_LIB to the path to lmbspecialops.so file')
@@ -40,6 +37,10 @@ median3x3_downsample = lmbspecialopslib.median3x3_downsample
 replace_nonfinite = lmbspecialopslib.replace_nonfinite
 scale_invariant_gradient = lmbspecialopslib.scale_invariant_gradient
 warp2d = lmbspecialopslib.warp2d
+transfer_key_frame2 = lmbspecialopslib.transfer_key_frame2
+rotation_matrix_to_angle_axis = lmbspecialopslib.rotation_matrix_to_angle_axis
+angle_axis_to_rotation_matrix = lmbspecialopslib.angle_axis_to_rotation_matrix 
+
 
 # Author: Lukas Voegtle <voegtlel@tf.uni-freiburg.de>
 def resample(input, size, antialias=False):
@@ -317,3 +318,15 @@ def _leaky_relu_grad(op, grad):
         leak=op.get_attr('leak'))
 
 
+@ops.RegisterGradient("AngleAxisToRotationMatrix")
+def _angle_axis_to_rotation_matrix_grad(op, grad):
+    return lmbspecialopslib.angle_axis_to_rotation_matrix_grad(
+            gradients=grad, 
+            in_=op.inputs[0], )
+
+
+@ops.RegisterGradient("RotationMatrixToAngleAxis")
+def _rotation_matrix_to_angle_axis_grad(op, grad):
+    return lmbspecialopslib.rotation_matrix_to_angle_axis_grad(
+            gradients=grad, 
+            in_=op.inputs[0], )
