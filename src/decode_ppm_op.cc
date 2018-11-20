@@ -133,7 +133,7 @@ class DecodePpmOp : public OpKernel {
       OP_REQUIRES(context, false,
                   errors::InvalidArgument("Invalid PPM data size, data too small for PPM file"));
     }
-    if (!data.starts_with("P6")) {
+    if (data.substr(0, 2) != StringPiece("P6")) {
       OP_REQUIRES(context, false,
                   errors::InvalidArgument("Invalid PPM header, expected 'P6'"));
     }
