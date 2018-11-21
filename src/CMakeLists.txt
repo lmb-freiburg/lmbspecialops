@@ -3,7 +3,8 @@ include(ExternalProject)
 ExternalProject_Add(
         webp
         PREFIX "${CMAKE_BINARY_DIR}/webp"
-        URL "http://downloads.webmproject.org/releases/webp/libwebp-0.6.0.tar.gz"
+        URL "http://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.0.2.tar.gz"
+        URL_MD5 02c0c55f1dd8612cd4d462e3409ad35d
         # do not update
         UPDATE_COMMAND ""
         # compile with PIC because caffe builds a shared object
@@ -20,7 +21,8 @@ set( webp_LIBRARY "${BINARY_DIR}/src/.libs/libwebp.a" )
 ExternalProject_Add(
         lz4
         PREFIX "${CMAKE_BINARY_DIR}/lz4"
-        URL "https://github.com/lz4/lz4/archive/r131.tar.gz"
+        URL "https://github.com/lz4/lz4/archive/v1.9.1.tar.gz"
+        URL_MD5 a80f28f2a2e5fe59ebfe8407f793da22
         # do not update
         UPDATE_COMMAND ""
         # fix missing CMakeLists.txt in source root dir
@@ -30,7 +32,7 @@ ExternalProject_Add(
 )
 ExternalProject_Get_Property( lz4 SOURCE_DIR BINARY_DIR )
 set( lz4_INCLUDE_DIR "${SOURCE_DIR}/lib" )
-set( lz4_STATIC_LIB ${BINARY_DIR}/cmake_unofficial/liblz4.a )
+set( lz4_STATIC_LIB ${BINARY_DIR}/contrib/cmake_unofficial/liblz4.a )
 
 
 find_package( PythonInterp REQUIRED )
