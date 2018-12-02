@@ -42,6 +42,66 @@ rotation_matrix_to_angle_axis = lmbspecialopslib.rotation_matrix_to_angle_axis
 angle_axis_to_rotation_matrix = lmbspecialopslib.angle_axis_to_rotation_matrix 
 
 
+def warp2d_tf(input, displacements, normalized=None, border_mode=None, name=None ):
+    """Warps the input with the given displacement vector field.
+
+    input: Tensor
+        Tensor with shape NCHW
+
+    displacements: Tensor
+        Tensor with the displacement vector field in NCHW format with C=2.
+        The first channel is the displacement in x direction (width). The second channel is the displacement in y direction (height).
+
+    normalized: bool
+        If true then the displacement vectors are normalized with the width and height of the input.
+
+    border_mode: str
+      Defines how to handle values outside of the image.
+      'clamp': Coordinates will be clamped to the valid range.
+      'value' : Uses zero outside the image borders.
+        
+    """
+    if normalized is None:
+        normalized = False
+    if border_mode is None:
+        border_mode = 'value'
+    if not border_mode in ('value', 'clamp'):
+        raise Exception('Unknown border_mode "{0}"'.format(border_mode))
+
+    with tf.name_scope(name, "warp2d_tf", [input, displacements]):
+        input = tf.convert_to_tensor(input, name='input')
+        displacements = tf.convert_to_tensor(displacements, name='displacements')
+    
+        input_shape = input.get_shape()
+        input_shape.with_rank(4)
+
+        displacements_shape = displacements.get_shape()
+        displacements_shape.with_rank(4)
+
+        height_width = displacements_shape[-2:].merge_with(input_shape[-2:])        
+        batch = displacements_shape[0].merge_with(input_shape[0])
+        
+        height = height_width[0].value
+        width = height_width[1].value
+        
+        X = tf.range(0, width, dtype=tf.float32)
+        Y = tf.range(0, height, dtype=tf.float32)
+        XY = tf.expand_dims(tf.stack(tf.meshgrid(X,Y),axis=-1),axis=0)
+
+        if normalized:
+            scale_xy = tf.constant([width, height], dtype=tf.float32, shape=[1,2,1,1])
+            displacements *= scale_xy
+        
+        warp = tf.transpose(displacements,[0,2,3,1]) + XY
+        if border_mode == 'clamp':
+            warp_x, warp_y = tf.unstack(warp, axis=-1)
+            warp_x = tf.clip_by_value(warp_x, 0, width-1)
+            warp_y = tf.clip_by_value(warp_y, 0, height-1)
+            warp = tf.stack([warp_x, warp_y], axis=-1)
+
+        return tf.transpose(tf.contrib.resampler.resampler(tf.transpose(input,[0,2,3,1]), warp),[0,3,1,2])
+
+
 # Author: Lukas Voegtle <voegtlel@tf.uni-freiburg.de>
 def resample(input, size, antialias=False):
     """
