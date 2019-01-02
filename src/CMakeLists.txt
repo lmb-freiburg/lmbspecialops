@@ -42,10 +42,14 @@ execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print
         OUTPUT_VARIABLE TENSORFLOW_INCLUDE_DIR )
 execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_lib(), end='')" 
         OUTPUT_VARIABLE TENSORFLOW_LIB_DIR )
+execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; \
+        print(';'.join(flag[2:] for flag in tf.sysconfig.get_compile_flags() if flag.startswith('-D')), end='')"
+        OUTPUT_VARIABLE TENSORFLOW_COMPILE_DEFINITIONS )
 find_library( TENSORFLOW_FRAMEWORK_LIB tensorflow_framework PATHS "${TENSORFLOW_LIB_DIR}" NO_DEFAULT_PATH )
 message( STATUS "${TENSORFLOW_INCLUDE_DIR}" )
 message( STATUS "${TENSORFLOW_LIB_DIR}" )
 message( STATUS "${TENSORFLOW_FRAMEWORK_LIB}" )
+message( STATUS "TensorFlow compile definitions: ${TENSORFLOW_COMPILE_DEFINITIONS}" )
 
 configure_file( config.h.in config.h )
 if( BUILD_WITH_CUDA )
@@ -77,8 +81,7 @@ set_target_properties( lmbspecialops PROPERTIES PREFIX "" )
 set_target_properties( lmbspecialops PROPERTIES DEBUG_POSTFIX "_debug" )
 set_target_properties( lmbspecialops PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAGS}" )
 set_target_properties( lmbspecialops PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}" )
-# use old ABI with gcc 5.x
-set_target_properties( lmbspecialops PROPERTIES COMPILE_DEFINITIONS "_GLIBCXX_USE_CXX11_ABI=0" )
+set_target_properties( lmbspecialops PROPERTIES COMPILE_DEFINITIONS "${TENSORFLOW_COMPILE_DEFINITIONS}" )
 # enable c++11
 set_target_properties( lmbspecialops PROPERTIES 
                 CXX_STANDARD 11 
