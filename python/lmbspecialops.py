@@ -35,7 +35,7 @@ print('Using {0}'.format(_lib_path), flush=True)
 depth_to_flow = lmbspecialopslib.depth_to_flow
 depth_to_normals = lmbspecialopslib.depth_to_normals
 flow_to_depth2 = lmbspecialopslib.flow_to_depth2
-leaky_relu = lmbspecialopslib.leaky_relu
+leaky_relu = lmbspecialopslib.leaky_relu_lmb
 median3x3_downsample = lmbspecialopslib.median3x3_downsample
 replace_nonfinite = lmbspecialopslib.replace_nonfinite
 scale_invariant_gradient = lmbspecialopslib.scale_invariant_gradient
@@ -316,9 +316,9 @@ def _replace_nonfinite_grad(op, grad):
         input=op.inputs[0])
 
 
-@ops.RegisterGradient("LeakyRelu")
-def _leaky_relu_grad(op, grad):
-    return lmbspecialopslib.leaky_relu_grad(
+@ops.RegisterGradient("LeakyReluLmb")
+def _leaky_relu_lmb_grad(op, grad):
+    return lmbspecialopslib.leaky_relu_lmb_grad(
         gradients=grad,
         input=op.inputs[0],
         leak=op.get_attr('leak'))
