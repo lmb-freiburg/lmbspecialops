@@ -26,46 +26,52 @@ See the [Op documentation](doc/lmbspecialops_doc.md) for a description of all fu
 Building and using lmbspecialops depends on the following libraries and programs
 
     tensorflow 1.4.0
-    cmake 3.7.1
+    cmake 3.8
     python 3.5
     cuda 8.0.61 (required for building with gpu support)
 
 The versions match the configuration we have tested on an ubuntu 16.04 system.
-lmbspecialops can work with other versions of the aforementioned dependencies, e.g. tensorflow 1.3, but this is not well tested.
+lmbspecialops can work with newer versions of the aforementioned dependencies, but this is not well tested.
 
 
+## Installation instructions
 
-## Build instructions
-
-
-Checkout the repository and setup the build directory.
+Checkout the repository and run `setup.py install`.
 
 ```bash
 git clone https://github.com/lmb-freiburg/lmbspecialops.git
 cd lmbspecialops
-
-mkdir build
-cd build
-cmake ..
-# cmake .. -DBUILD_WITH_CUDA=OFF # to disable gpu support
+python setup.py install
 ```
 
-Use ```ccmake``` to customize the configuration.
-You may want to adapt GPU code generation to your graphics card.
-E.g. to enable code generation for the Tesla K80 enable *GENERATE_KEPLER_SM37_CODE*
+NVCC's CUDA gencode parameters are configured automatically based on available GPU devices.
+
+If necessary, you can use the `CUDA_ARCH_LIST` environment variable or CMake variable to
+generate code for specific architectures or compute capabilities instead.
+`CUDA_ARCH_LIST` accepts a list of architecture names (e.g. Pascal, Volta, etc) and/or
+compute capability versions (6.1, 7.0, etc).
+
+To pass any parameters to CMake set the `CMAKE_COMMON_VARIABLES` environment variable. For example:
 
 ```bash
+export CUDA_ARCH_LIST="Pascal 7.0"
+export CMAKE_COMMON_VARIABLES="-DBUILD_WITH_CUDA=OFF" # to disable gpu support
+python setup.py install
+```
+
+Alternatively, you can use `ccmake` or `cmake-gui` inside the created build directory
+to configure any CMake variables.
+
+```bash
+python setup.py build_ext
+cd build/temp.*
 ccmake .
+make clean
+cd ../..
+python setup.py install
 ```
 
-Build the library
-
-```bash
-make
-```
-
-To use the ops, you need to add the ```lmbspecialops/python``` directory to your python path.
-Then you can import and use the ops like this 
+After installation you can import and use the ops like this 
 
 ```python
 import lmbspecialops
@@ -79,18 +85,20 @@ B = lmbspecialops.replace_nonfinite(A)
 print(B.eval()) # prints [1, 2, 0]
 ```
 
-    
+## Development
 
-### Virtualenv build 
+For development, it is preferable to use CMake directly without running `setup.py`.
+```bash
+mkdir build
+cd build
+cmake ..
+# cmake .. -DBUILD_WITH_CUDA=OFF # to disable gpu support
+make
+```
 
-To build inside a virtualenv make sure to activate the environment before
-running cmake.
+To use the ops, you need to add the `python` directory to your python path.
 
-If you encounter problems with cmake not finding the correct paths to your
-python interpreter or tensorflow see https://gist.github.com/datagrok/2199506
-for possible solutions.
-
-
+Use `make test` in the build directory to run tests.
 
 ## License
 
