@@ -41,6 +41,7 @@ Checkout the repository and run `setup.py install`.
 ```bash
 git clone https://github.com/lmb-freiburg/lmbspecialops.git
 cd lmbspecialops
+pip install cmake-setuptools
 python setup.py install
 ```
 
