@@ -1,5 +1,6 @@
 include( ExternalProject )
 
+# webp
 ExternalProject_Add(
         webp
         PREFIX "${CMAKE_BINARY_DIR}/webp"
@@ -35,23 +36,9 @@ set( lz4_INCLUDE_DIR "${SOURCE_DIR}/lib" )
 set( lz4_STATIC_LIB ${BINARY_DIR}/contrib/cmake_unofficial/liblz4.a )
 
 
-find_package( PythonInterp REQUIRED )
 find_package( OpenMP REQUIRED )
 
-
-# retrieve tensorflow include dir and lib dir
-execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_include(), end='')"
-        OUTPUT_VARIABLE TENSORFLOW_INCLUDE_DIR )
-execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_lib(), end='')"
-        OUTPUT_VARIABLE TENSORFLOW_LIB_DIR )
-execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; \
-        print(';'.join(flag[2:] for flag in tf.sysconfig.get_compile_flags() if flag.startswith('-D')), end='')"
-        OUTPUT_VARIABLE TENSORFLOW_COMPILE_DEFINITIONS )
-find_library( TENSORFLOW_FRAMEWORK_LIB tensorflow_framework PATHS "${TENSORFLOW_LIB_DIR}" NO_DEFAULT_PATH )
-message( STATUS "${TENSORFLOW_INCLUDE_DIR}" )
-message( STATUS "${TENSORFLOW_LIB_DIR}" )
-message( STATUS "${TENSORFLOW_FRAMEWORK_LIB}" )
-message( STATUS "TensorFlow compile definitions: ${TENSORFLOW_COMPILE_DEFINITIONS}" )
+include( "${CMAKE_SOURCE_DIR}/cmake/tensorflow_build_flags.cmake" )
 
 configure_file( config.h.in config.h )
 if( BUILD_WITH_CUDA )
@@ -64,7 +51,6 @@ endif()
 
 file( GLOB lmbspecialops_SOURCES *.cc *.c )
 file( GLOB lmbspecialops_CUSOURCES *.cu )
-
 
 include_directories(
         ${TENSORFLOW_INCLUDE_DIR}
