@@ -1,4 +1,4 @@
-include(ExternalProject)
+include( ExternalProject )
 
 ExternalProject_Add(
         webp
@@ -8,7 +8,7 @@ ExternalProject_Add(
         # do not update
         UPDATE_COMMAND ""
         # compile with PIC because caffe builds a shared object
-        CONFIGURE_COMMAND CFLAGS=-fPIC ../webp/configure --disable-gl --disable-png --disable-jpeg  --disable-tiff --disable-gif --disable-wic --disable-shared
+        CONFIGURE_COMMAND CFLAGS=-fPIC ../webp/configure --disable-gl --disable-png --disable-jpeg --disable-tiff --disable-gif --disable-wic --disable-shared
         BUILD_COMMAND "make"
         # do not install
         INSTALL_COMMAND ""
@@ -40,9 +40,9 @@ find_package( OpenMP REQUIRED )
 
 
 # retrieve tensorflow include dir and lib dir
-execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_include(), end='')" 
+execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_include(), end='')"
         OUTPUT_VARIABLE TENSORFLOW_INCLUDE_DIR )
-execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_lib(), end='')" 
+execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_lib(), end='')"
         OUTPUT_VARIABLE TENSORFLOW_LIB_DIR )
 execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; \
         print(';'.join(flag[2:] for flag in tf.sysconfig.get_compile_flags() if flag.startswith('-D')), end='')"
@@ -55,28 +55,27 @@ message( STATUS "TensorFlow compile definitions: ${TENSORFLOW_COMPILE_DEFINITION
 
 configure_file( config.h.in config.h )
 if( BUILD_WITH_CUDA )
-        find_package( CUDA REQUIRED )
-        include( "${CMAKE_SOURCE_DIR}/cmake/cuda_gencode_options.cmake" )
-        list( APPEND CUDA_NVCC_FLAGS "-std=c++11")
-        list( APPEND CUDA_NVCC_FLAGS "${CUDA_GENCODE_STRING}" )
-        list( APPEND CUDA_NVCC_FLAGS_DEBUG -g -G -O0 --ptxas-options=-v )
-
+    find_package( CUDA REQUIRED )
+    include( "${CMAKE_SOURCE_DIR}/cmake/cuda_gencode_options.cmake" )
+    list( APPEND CUDA_NVCC_FLAGS -std=c++11 )
+    list( APPEND CUDA_NVCC_FLAGS ${CUDA_ARCH_FLAGS} )
+    list( APPEND CUDA_NVCC_FLAGS_DEBUG -g -G -O0 --ptxas-options=-v )
 endif()
 
-file( GLOB lmbspecialops_SOURCES  *.cc *.c )
+file( GLOB lmbspecialops_SOURCES *.cc *.c )
 file( GLOB lmbspecialops_CUSOURCES *.cu )
 
 
-include_directories( 
-    ${TENSORFLOW_INCLUDE_DIR}
-    ${TENSORFLOW_INCLUDE_DIR}/external/nsync/public/  # fix nsync headers not found bug
+include_directories(
+        ${TENSORFLOW_INCLUDE_DIR}
+        ${TENSORFLOW_INCLUDE_DIR}/external/nsync/public/  # fix nsync headers not found bug
         ${PROJECT_BINARY_DIR}/lib
 )
 
 if( BUILD_WITH_CUDA )
-        cuda_add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} ${lmbspecialops_CUSOURCES} )
+    cuda_add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} ${lmbspecialops_CUSOURCES} )
 else()
-        add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} )
+    add_library( lmbspecialops SHARED ${lmbspecialops_SOURCES} )
 endif()
 # do not add 'lib' prefix
 set_target_properties( lmbspecialops PROPERTIES PREFIX "" )
@@ -85,10 +84,10 @@ set_target_properties( lmbspecialops PROPERTIES COMPILE_FLAGS "${OpenMP_CXX_FLAG
 set_target_properties( lmbspecialops PROPERTIES LINK_FLAGS "${OpenMP_CXX_FLAGS}" )
 set_target_properties( lmbspecialops PROPERTIES COMPILE_DEFINITIONS "${TENSORFLOW_COMPILE_DEFINITIONS}" )
 # enable c++11
-set_target_properties( lmbspecialops PROPERTIES 
-                CXX_STANDARD 11 
-                CXX_STANDARD_REQUIRED ON 
-                CXX_EXTENSIONS OFF)
+set_target_properties( lmbspecialops PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF )
 
 add_dependencies( lmbspecialops lz4 webp )
 
@@ -102,5 +101,5 @@ target_link_libraries( lmbspecialops
         ${webp_LIBRARY}
 )
 if( TENSORFLOW_FRAMEWORK_LIB )
-        target_link_libraries( lmbspecialops ${TENSORFLOW_FRAMEWORK_LIB} )
+    target_link_libraries( lmbspecialops ${TENSORFLOW_FRAMEWORK_LIB} )
 endif()
