@@ -190,11 +190,11 @@ class DecodePfmOp : public OpKernel {
                   errors::InvalidArgument("Invalid PFM data size, data too small for PFM file"));
     }
     int channels = channels_;
-    if (data.starts_with("PF")) {
+    if (data.substr(0, 2) == StringPiece("PF")) {
         OP_REQUIRES(context, channels == 0 || channels == 3,
                       errors::InvalidArgument("File has 3 channels, but output has only 1"));
         channels = 3;
-    } else if (data.starts_with("Pf")) {
+    } else if (data.substr(0, 2) == StringPiece("Pf")) {
         OP_REQUIRES(context, channels == 0 || channels == 1,
                           errors::InvalidArgument("File has 1 channels, but output has 3"));
         channels = 1;

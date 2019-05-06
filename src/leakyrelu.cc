@@ -22,7 +22,7 @@
 
 using namespace tensorflow;
 
-REGISTER_OP("LeakyRelu")
+REGISTER_OP("LeakyReluLmb")
   .Attr("T: {float, double}")
   .Attr("leak: float = 0.1")
   .Input("input: T")
@@ -48,10 +48,10 @@ output:
 
 
 template <class T>
-class LeakyReluOp : public OpKernel 
+class LeakyReluLmbOp : public OpKernel
 {
 public:
-  explicit LeakyReluOp(OpKernelConstruction* construction)
+  explicit LeakyReluLmbOp(OpKernelConstruction* construction)
     :OpKernel(construction)
   { 
     float leak_tmp;
@@ -87,10 +87,10 @@ private:
 
 #define REG_KB(type)                                                          \
 REGISTER_KERNEL_BUILDER(                                                      \
-    Name("LeakyRelu")                                                         \
+    Name("LeakyReluLmb")                                                         \
     .Device(DEVICE_CPU)                                                       \
     .TypeConstraint<type>("T"),                                               \
-    LeakyReluOp<type>);                                                       
+    LeakyReluLmbOp<type>);
 REG_KB(float)
 REG_KB(double)
 #undef REG_KB
@@ -98,7 +98,7 @@ REG_KB(double)
 
 
 
-REGISTER_OP("LeakyReluGrad")
+REGISTER_OP("LeakyReluLmbGrad")
   .Attr("T: {float, double}")
   .Attr("leak: float")
   .Input("gradients: T")
@@ -110,15 +110,15 @@ REGISTER_OP("LeakyReluGrad")
       return Status::OK();
     })
   .Doc(R"doc(
-This computes the gradient for the op 'LeakyRelu'. 
+This computes the gradient for the op 'LeakyReluLmb'.
 )doc");
 
 
 template <class T>
-class LeakyReluGradOp : public OpKernel 
+class LeakyReluLmbGradOp : public OpKernel
 {
 public:
-  explicit LeakyReluGradOp(OpKernelConstruction* construction)
+  explicit LeakyReluLmbGradOp(OpKernelConstruction* construction)
     :OpKernel(construction)
   {
     float leak_tmp;
@@ -162,10 +162,10 @@ private:
 
 #define REG_KB(type)                                                          \
 REGISTER_KERNEL_BUILDER(                                                      \
-    Name("LeakyReluGrad")                                                     \
+    Name("LeakyReluLmbGrad")                                                     \
     .Device(DEVICE_CPU)                                                       \
     .TypeConstraint<type>("T"),                                               \
-    LeakyReluGradOp<type>);                                                   
+    LeakyReluLmbGradOp<type>);
 REG_KB(float)
 REG_KB(double)
 #undef REG_KB

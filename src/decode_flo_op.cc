@@ -62,7 +62,7 @@ class DecodeFloOp : public OpKernel {
                   errors::InvalidArgument("Invalid FLO data size, expected at least 12"));
     }
 
-    if (!data.starts_with("PIEH")) {
+    if (data.substr(0, 4) != StringPiece("PIEH")) {
       OP_REQUIRES(context, false,
                   errors::InvalidArgument("Invalid FLO header, expected 'PIEH'"));
     }

@@ -1,17 +1,17 @@
 #
 #  lmbspecialops - a collection of tensorflow ops
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -20,13 +20,23 @@ from tensorflow.python.framework import ops
 import os
 import warnings
 
+_lib_path = None
 if 'LMBSPECIALOPS_LIB' in os.environ:
     _lib_path = os.environ['LMBSPECIALOPS_LIB']
-else:  # try to find the lib in the build directory relative to this file
-    _lib_path = os.path.abspath(os.path.join(os.path.split(__file__)[0], '..', 'build', 'lib', 'lmbspecialops.so'))
-if not os.path.isfile(_lib_path):
+else:
+    _script_dir = os.path.dirname(__file__)
+    _potential_paths = [
+        os.path.abspath(os.path.join(_script_dir, 'lmbspecialops.so')),
+        os.path.abspath(os.path.join(_script_dir, '..', 'lmbspecialops.so')),
+        os.path.abspath(os.path.join(_script_dir, '..', 'build', 'lib', 'lmbspecialops.so')),
+    ]
+    for p in _potential_paths:
+        if os.path.isfile(p):
+            _lib_path = p
+            break
+if not _lib_path or not os.path.isfile(_lib_path):
     raise ValueError(
-        'Cannot find lmbspecialops.so . Set the environment variable LMBSPECIALOPS_LIB to the path to lmbspecialops.so file')
+        'Cannot find lmbspecialops.so. Set the environment variable LMBSPECIALOPS_LIB to the path to lmbspecialops.so file')
 lmbspecialopslib = tf.load_op_library(_lib_path)
 print('Using {0}'.format(_lib_path), flush=True)
 
@@ -35,22 +45,29 @@ print('Using {0}'.format(_lib_path), flush=True)
 depth_to_flow = lmbspecialopslib.depth_to_flow
 depth_to_normals = lmbspecialopslib.depth_to_normals
 flow_to_depth2 = lmbspecialopslib.flow_to_depth2
-leaky_relu = lmbspecialopslib.leaky_relu
+leaky_relu = lmbspecialopslib.leaky_relu_lmb
 median3x3_downsample = lmbspecialopslib.median3x3_downsample
 replace_nonfinite = lmbspecialopslib.replace_nonfinite
 scale_invariant_gradient = lmbspecialopslib.scale_invariant_gradient
 warp2d = lmbspecialopslib.warp2d
 
+flow_warp = lmbspecialopslib.flow_warp
+correlation = lmbspecialopslib.correlation
+correlation_1d = lmbspecialopslib.correlation1d
+flow_out_of_frame = lmbspecialopslib.flow_out_of_frame
+resample = lmbspecialopslib.resample
+
+# Remove this?
 # Author: Lukas Voegtle <voegtlel@tf.uni-freiburg.de>
-def resample(input, size, antialias=False):
-    """
-    Resamples the given input tensor to a given size.
-    :param input: dtype input tensor [batch, height, width, channels]
-    :param size: new size (height, width)
-    :param antialias: perform antialiasing iff downsampling
-    :return: resized tensor
-    """
-    return lmbspecialopslib.resample(input, size, antialias=antialias)
+#def resample(input, size, antialias=False):
+#    """
+#    Resamples the given input tensor to a given size.
+#    :param input: dtype input tensor [batch, height, width, channels]
+#    :param size: new size (height, width)
+#    :param antialias: perform antialiasing iff downsampling
+#    :return: resized tensor
+#    """
+#    return lmbspecialopslib.resample(input, size, antialias=antialias)
 
 
 # Author: Lukas Voegtle <voegtlel@tf.uni-freiburg.de>
@@ -280,13 +297,13 @@ def flow_to_depth(flow, intrinsics, rotation, translation, rotation_format=None,
     if not nowarning:
         warnings.warn("flow_to_depth has incorrect behaviour but is kept for compatibility. Please use flow_to_depth2", DeprecationWarning, stacklevel=2)
     return lmbspecialopslib.flow_to_depth(
-            flow=flow, 
-            intrinsics=intrinsics, 
-            rotation=rotation, 
-            translation=translation, 
-            rotation_format=rotation_format, 
-            inverse_depth=inverse_depth, 
-            normalized_flow=normalized_flow, 
+            flow=flow,
+            intrinsics=intrinsics,
+            rotation=rotation,
+            translation=translation,
+            rotation_format=rotation_format,
+            inverse_depth=inverse_depth,
+            normalized_flow=normalized_flow,
             name=name)
 flow_to_depth.__doc__ = lmbspecialopslib.flow_to_depth.__doc__
 
@@ -309,11 +326,42 @@ def _replace_nonfinite_grad(op, grad):
         input=op.inputs[0])
 
 
-@ops.RegisterGradient("LeakyRelu")
-def _leaky_relu_grad(op, grad):
-    return lmbspecialopslib.leaky_relu_grad(
+@ops.RegisterGradient("LeakyReluLmb")
+def _leaky_relu_lmb_grad(op, grad):
+    return lmbspecialopslib.leaky_relu_lmb_grad(
         gradients=grad,
         input=op.inputs[0],
         leak=op.get_attr('leak'))
 
+@ops.RegisterGradient("FlowWarp")
+def _flow_warp_grad(op, grad):
+    return lmbspecialopslib.flow_warp_grad(
+            gradient=grad,
+            image=op.inputs[0],
+            flow=op.inputs[1])
 
+@ops.RegisterGradient("Correlation")
+def _correlation_grad(op, grad):
+    return lmbspecialopslib.correlation_grad(
+            gradient=grad,
+            input1=op.inputs[0],
+            input2=op.inputs[1],
+            kernel_size=op.get_attr('kernel_size'),
+            max_displacement=op.get_attr('max_displacement'),
+            stride1=op.get_attr('stride1'),
+            stride2=op.get_attr('stride2'),
+            pad_size=op.get_attr('pad_size') )
+
+@ops.RegisterGradient("Correlation1D")
+def _correlation_1d_grad(op, grad):
+    return lmbspecialopslib.correlation1d_grad(
+            gradient=grad,
+            input1=op.inputs[0],
+            input2=op.inputs[1],
+            kernel_size=op.get_attr('kernel_size'),
+            max_displacement=op.get_attr('max_displacement'),
+            stride1=op.get_attr('stride1'),
+            stride2=op.get_attr('stride2'),
+            pad_size=op.get_attr('pad_size'),
+            single_dir=op.get_attr('single_dir')
+            )
