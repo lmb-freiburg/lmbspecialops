@@ -20,6 +20,7 @@
 #include "tensorflow/core/framework/shape_inference.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "rotation_format.h"
+#include <cmath>
 
 using namespace tensorflow;
 
@@ -106,9 +107,63 @@ public:
 
       T tmp = (R.trace()-1)*T(0.5);
       T theta = std::acos(std::min(T(1),std::max(T(-1),tmp)));
-      if( theta < T(1e-6) )
+      if( theta < T(1e-6) ) // singularity at 0
       {
         aa.setZero();
+      }
+      else if ( std::abs(theta - T(M_PI)) < T(1e-6) ) // singularity at 180
+      {
+        T xx = (R(0,0)+1)/2;
+        T yy = (R(1,1)+1)/2;
+        T zz = (R(2,2)+1)/2;
+        T xy = (R(0,1)+R(1,0))/4;
+        T xz = (R(0,2)+R(2,0))/4;
+        T yz = (R(1,2)+R(2,1))/4;
+        if ( xx > yy && xx > zz )
+        {
+          if ( xx < T(1e-6) )
+          {
+            Vec3 w( 0, T(M_SQRT1_2), T(M_SQRT1_2));
+            aa = w*theta;
+          }
+          else
+          {
+            T x = std::sqrt(xx);
+            Vec3 w( x, xy/x, xz/x );
+            w.normalize();
+            aa = w*theta;
+          }
+        }
+        else if ( yy > zz)
+        {
+          if ( yy < T(1e-6) )
+          {
+            Vec3 w( T(M_SQRT1_2), 0, T(M_SQRT1_2));
+            aa = w*theta;
+          }
+          else
+          {
+            T y = std::sqrt(yy);
+            Vec3 w( xy/y, y, yz/y );
+            w.normalize();
+            aa = w*theta;
+          }
+        }
+        else
+        {
+          if ( zz < T(1e-6) )
+          {
+            Vec3 w( T(M_SQRT1_2), T(M_SQRT1_2), 0);
+            aa = w*theta;
+          }
+          else
+          {
+            T z = std::sqrt(zz);
+            Vec3 w( xz/z, yz/z, z);
+            w.normalize();
+            aa = w*theta;
+          }
+        }
       }
       else
       {
@@ -116,7 +171,7 @@ public:
         Vec3 w( R(1,2)-R(2,1), R(2,0)-R(0,2), R(0,1)-R(1,0) );
         w *= 1/(2*std::sin(theta));
         aa = w*theta;
-       }
+      }
     }
 
     
@@ -213,6 +268,82 @@ public:
         R_backprop(2,1) += T(-0.5)*grad(0);
         R_backprop(0,2) += T(-0.5)*grad(1);
         R_backprop(1,2) += T(0.5)*grad(0);
+        continue;
+      }
+      else if ( std::abs(theta - T(M_PI)) < T(1e-6) ) // singularity at 180
+      {
+        T xx = (R(0,0)+1)/2;
+        T yy = (R(1,1)+1)/2;
+        T zz = (R(2,2)+1)/2;
+        if ( xx > yy && xx > zz )
+        {
+          if ( xx < T(1e-6) )
+          {
+            R_backprop(1,0) += T(-0.5)*grad(2);
+            R_backprop(2,0) += T(0.5)*grad(1);
+            R_backprop(0,1) += T(0.5)*grad(2);
+            R_backprop(2,1) += T(-0.5)*grad(0);
+            R_backprop(0,2) += T(-0.5)*grad(1);
+            R_backprop(1,2) += T(0.5)*grad(0);
+          }
+          else
+          {
+            T x1 = std::sqrt(xx);
+            R_backprop(0,0) += T(M_PI_4)/x1*grad(0);
+            R_backprop(0,0) += T(M_PI)*(R(0,1)+R(1,0))/(16*x1*x1*x1)*grad(1);
+            R_backprop(0,0) += T(M_PI)*(R(0,2)+R(2,0))/(16*x1*x1*x1)*grad(2);
+            R_backprop(0,1) += T(M_PI_4)/x1*grad(1);
+            R_backprop(1,0) += T(M_PI_4)/x1*grad(1);
+            R_backprop(0,2) += T(M_PI_4)/x1*grad(2);
+            R_backprop(2,0) += T(M_PI_4)/x1*grad(2);
+          }
+        }
+        else if ( yy > zz)
+        {
+          if ( yy < T(1e-6) )
+          {
+            R_backprop(1,0) += T(-0.5)*grad(2);
+            R_backprop(2,0) += T(0.5)*grad(1);
+            R_backprop(0,1) += T(0.5)*grad(2);
+            R_backprop(2,1) += T(-0.5)*grad(0);
+            R_backprop(0,2) += T(-0.5)*grad(1);
+            R_backprop(1,2) += T(0.5)*grad(0);
+          }
+          else
+          {
+            T x1 = std::sqrt(yy);
+            R_backprop(1,1) += T(M_PI_4)/x1*grad(1);
+            R_backprop(1,1) += T(M_PI)*(R(0,1)+R(1,0))/(16*x1*x1*x1)*grad(1);
+            R_backprop(1,1) += T(M_PI)*(R(1,2)+R(2,1))/(16*x1*x1*x1)*grad(1);
+            R_backprop(0,1) += T(M_PI_4)/x1*grad(0);
+            R_backprop(1,0) += T(M_PI_4)/x1*grad(0);
+            R_backprop(1,2) += T(M_PI_4)/x1*grad(2);
+            R_backprop(2,1) += T(M_PI_4)/x1*grad(2);
+          }
+        }
+        else
+        {
+          if ( zz < T(1e-6) )
+          {
+            R_backprop(1,0) += T(-0.5)*grad(2);
+            R_backprop(2,0) += T(0.5)*grad(1);
+            R_backprop(0,1) += T(0.5)*grad(2);
+            R_backprop(2,1) += T(-0.5)*grad(0);
+            R_backprop(0,2) += T(-0.5)*grad(1);
+            R_backprop(1,2) += T(0.5)*grad(0);
+          }
+          else
+          {
+            T x1 = std::sqrt(zz);
+            R_backprop(2,2) += T(M_PI_4)/x1*grad(2);
+            R_backprop(2,2) += T(M_PI)*(R(0,1)+R(1,0))/(16*x1*x1*x1)*grad(2);
+            R_backprop(2,2) += T(M_PI)*(R(1,2)+R(2,1))/(16*x1*x1*x1)*grad(2);
+            R_backprop(0,2) += T(M_PI_4)/x1*grad(0);
+            R_backprop(2,0) += T(M_PI_4)/x1*grad(0);
+            R_backprop(1,2) += T(M_PI_4)/x1*grad(1);
+            R_backprop(2,1) += T(M_PI_4)/x1*grad(1);
+          }
+        }
         continue;
       }
 
